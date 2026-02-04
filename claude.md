@@ -10,7 +10,8 @@ Tài liệu này lưu trữ các quy tắc và phong cách phát triển đã th
 - **Tránh Architectural Drift:** Luôn kiểm tra các pattern hiện có trong codebase trước khi viết code mới.
 
 ## 2. Quy trình làm việc (Strict Workflow)
-1. **Planning Mode:** Luôn bật planning mode cho các thay đổi > 15 dòng code.
+1. **Git Flow:** Tuyệt đối không lập trình trực tiếp trên nhánh `main`. Mọi tính năng mới phải được phát triển trên nhánh `develop` hoặc các feature branches.
+2. **Planning Mode:** Luôn bật planning mode cho các thay đổi > 15 dòng code.
 2. **Review theo "Shape":** Tập trung vào cấu trúc file diff và luồng dữ liệu thay vì soi từng dòng đơn lẻ.
 3. **Cập nhật tri thức:** Sau mỗi session quan trọng, phải cập nhật file này nếu có lỗi mới phát hiện hoặc pattern mới được thống nhất.
 
