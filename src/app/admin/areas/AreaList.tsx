@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react';
-import { Plus, MoreHorizontal, QrCode, MapPin, Trash2, X } from 'lucide-react';
+import { Plus, QrCode, MapPin, Trash2, X } from 'lucide-react';
 import { createArea, deleteArea } from './actions';
 
 interface Area {
@@ -59,7 +59,7 @@ export default function AreaList({ initialAreas }: { initialAreas: Area[] }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
                 {areas.map((area, index) => (
-                    <div key={area.id} className="sf-card" style={{ animation: `fadeUp 0.5s ease forwards ${index * 0.1}s`, opacity: 0 }}>
+                    <div key={area.id} className="sf-card animate-fade-up" style={{ animationDelay: `${index * 0.1}s`, opacity: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                 <div style={{
@@ -193,12 +193,6 @@ export default function AreaList({ initialAreas }: { initialAreas: Area[] }) {
                 </div>
             )}
 
-            <style jsx>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
         </div>
     );
 }

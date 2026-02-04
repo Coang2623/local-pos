@@ -4,23 +4,31 @@ import { supabase } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 
 export async function getAreas() {
-    const { data, error } = await supabase
-        .from('areas')
-        .select(`
-            *,
-            tables (count)
-        `)
-        .order('created_at', { ascending: true });
-
-    if (error) {
-        console.error('Error fetching areas:', error);
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
         return [];
     }
+    try {
+        const { data, error } = await supabase
+            .from('areas')
+            .select(`
+                *,
+                tables (count)
+            `)
+            .order('created_at', { ascending: true });
 
-    return data.map(area => ({
-        ...area,
-        tableCount: area.tables?.[0]?.count || 0
-    }));
+        if (error) {
+            console.error('Error fetching areas:', error);
+            return [];
+        }
+
+        return data?.map(area => ({
+            ...area,
+            tableCount: area.tables?.[0]?.count || 0
+        })) || [];
+    } catch (e) {
+        console.error('Connection error:', e);
+        return [];
+    }
 }
 
 export async function createArea(name: string) {
