@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Plus, QrCode, MapPin, Trash2, X } from 'lucide-react';
 import { createArea, deleteArea } from './actions';
 
@@ -89,9 +90,9 @@ export default function AreaList({ initialAreas }: { initialAreas: Area[] }) {
                         </div>
 
                         <div style={{ display: 'flex', gap: '12px' }}>
-                            <button className="btn-apple secondary" style={{ flex: 1 }}>
+                            <Link href={`/admin/areas/${area.id}`} className="btn-apple secondary" style={{ flex: 1 }}>
                                 Chi tiết bàn
-                            </button>
+                            </Link>
                             <button className="btn-apple secondary" style={{ flex: 1 }}>
                                 <QrCode size={18} />
                                 Xuất QR
