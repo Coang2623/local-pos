@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Store, ClipboardList, Settings, Coffee } from 'lucide-react';
 
 export default function AdminLayout({
@@ -6,6 +9,8 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
+    const pathname = usePathname();
+
     return (
         <div className="admin-container" style={{ display: 'flex', minHeight: '100vh' }}>
             {/* Sidebar - MacOS Style */}
@@ -33,12 +38,12 @@ export default function AdminLayout({
                 </div>
 
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <SidebarLink href="/admin" icon={<LayoutDashboard size={18} />} label="Tổng quan" />
-                    <SidebarLink href="/admin/areas" icon={<Store size={18} />} label="Khu vực & Bàn" active />
-                    <SidebarLink href="/admin/menu" icon={<Coffee size={18} />} label="Thực đơn" />
-                    <SidebarLink href="/admin/orders" icon={<ClipboardList size={18} />} label="Hóa đơn" />
+                    <SidebarLink href="/admin" icon={<LayoutDashboard size={18} />} label="Tổng quan" active={pathname === '/admin'} />
+                    <SidebarLink href="/admin/areas" icon={<Store size={18} />} label="Khu vực & Bàn" active={pathname.startsWith('/admin/areas')} />
+                    <SidebarLink href="/admin/menu" icon={<Coffee size={18} />} label="Thực đơn" active={pathname.startsWith('/admin/menu')} />
+                    <SidebarLink href="/admin/orders" icon={<ClipboardList size={18} />} label="Hóa đơn" active={pathname.startsWith('/admin/orders')} />
                     <div style={{ height: '1px', backgroundColor: 'var(--separator)', margin: '16px 8px' }} />
-                    <SidebarLink href="/admin/settings" icon={<Settings size={18} />} label="Cài đặt" />
+                    <SidebarLink href="/admin/settings" icon={<Settings size={18} />} label="Cài đặt" active={pathname.startsWith('/admin/settings')} />
                 </nav>
             </aside>
 
