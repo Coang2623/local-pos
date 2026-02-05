@@ -23,7 +23,7 @@ export async function getStoreSettings() {
             };
         }
         return data;
-    } catch (e) {
+    } catch {
         return null;
     }
 }

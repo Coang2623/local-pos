@@ -110,7 +110,7 @@ export default function OrderList({ initialOrders }: { initialOrders: Order[] })
     const handleUpdateStatus = async (id: string, newStatus: string) => {
         try {
             await updateOrderStatus(id, newStatus);
-            setOrders(orders.map(o => o.id === id ? { ...o, status: newStatus as any } : o));
+            setOrders(orders.map(o => o.id === id ? { ...o, status: newStatus as Order['status'] } : o));
         } catch (error) {
             alert('Lỗi: ' + (error as Error).message);
         }

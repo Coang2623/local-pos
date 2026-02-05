@@ -80,7 +80,7 @@ export async function getTableMapData() {
                 let pendingItems = 0;
                 tableOrders.forEach(o => {
                     if (o.status === 'pending' || o.status === 'preparing') {
-                        pendingItems += o.order_items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+                        pendingItems += o.order_items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
                     }
                 });
 

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { addToOrder } from './actions';
 import { supabase } from '@/lib/supabase';
-import { Search, ChevronLeft, Minus, Plus, ShoppingCart, Trash2, Save } from 'lucide-react';
+import { Search, ChevronLeft, Minus, Plus, Save } from 'lucide-react';
 import Link from 'next/link';
 
 interface Product {
@@ -28,14 +28,33 @@ interface OrderItem {
     note?: string;
 }
 
-export default function TableDetail({ table, initialMenu, initialOrder }: any) {
+interface Table {
+    id: string;
+    name: string;
+    areas?: { name: string };
+}
+
+interface Order {
+    id: string;
+    total_amount: number;
+    order_items: {
+        id: string;
+        quantity: number;
+        created_at: string;
+        note?: string;
+        price_at_order: number;
+        products: { name: string };
+    }[];
+}
+
+export default function TableDetail({ table, initialMenu, initialOrder }: { table: Table, initialMenu: { categories: Category[], products: Product[] }, initialOrder: Order | null }) {
     const [activeCategory, setActiveCategory] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState<OrderItem[]>([]);
-    const [currentOrder, setCurrentOrder] = useState<any>(initialOrder);
+    const [currentOrder, setCurrentOrder] = useState<Order | null>(initialOrder);
     const [isLoading, setIsLoading] = useState(false);
 
-    const refreshOrder = async () => {
+    const refreshOrder = useCallback(async () => {
         const { data } = await supabase
             .from('orders')
             .select(`*, order_items (*, products (name, price, image_url))`)
@@ -45,16 +64,15 @@ export default function TableDetail({ table, initialMenu, initialOrder }: any) {
             .limit(1)
             .single();
 
-        if (data) setCurrentOrder(data);
+        if (data) setCurrentOrder(data as unknown as Order);
         else setCurrentOrder(null);
-    };
+    }, [table.id]);
 
     useEffect(() => {
         const channel = supabase
             .channel(`admin_table_${table.id}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `table_id=eq.${table.id}` }, refreshOrder)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_items' }, () => {
-                // Optimization: Check order_id match before refresh
                 refreshOrder();
             })
             .subscribe();
@@ -62,7 +80,7 @@ export default function TableDetail({ table, initialMenu, initialOrder }: any) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [table.id]);
+    }, [table.id, refreshOrder]);
 
     const filteredProducts = initialMenu.products.filter((p: Product) => {
         const matchCategory = activeCategory === 'all' || p.category_id === activeCategory;
@@ -253,7 +271,7 @@ export default function TableDetail({ table, initialMenu, initialOrder }: any) {
 
                     <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {currentOrder ? (
-                            currentOrder.order_items.map((item: any) => (
+                            currentOrder.order_items.map((item) => (
                                 <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                                     <div style={{ display: 'flex', gap: '8px' }}>
                                         <span style={{ fontWeight: 700, color: 'var(--system-blue)', width: '24px' }}>{item.quantity}x</span>

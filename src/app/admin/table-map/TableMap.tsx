@@ -6,7 +6,7 @@ import { Clock, Coffee, DollarSign, Utensils } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
-interface TableNode {
+export interface TableNode {
     id: string;
     name: string;
     status: 'empty' | 'occupied';
@@ -15,7 +15,7 @@ interface TableNode {
     item_count: number; // pending items
 }
 
-interface AreaNode {
+export interface AreaNode {
     id: string;
     name: string;
     tables: TableNode[];
@@ -27,7 +27,7 @@ export default function TableMap({ initialData }: { initialData: AreaNode[] }) {
 
     const refreshData = async () => {
         const data = await getTableMapData();
-        setAreas(data as any);
+        setAreas(data as AreaNode[]);
     };
 
     useEffect(() => {

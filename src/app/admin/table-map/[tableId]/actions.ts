@@ -41,7 +41,7 @@ export async function getMenuData() {
             categories: categories || [],
             products: products || []
         };
-    } catch (e) {
+    } catch {
         return { categories: [], products: [] };
     }
 }
@@ -71,7 +71,14 @@ export async function getTableOrder(tableId: string) {
     }
 }
 
-export async function addToOrder(tableId: string, items: any[]) {
+interface CartItem {
+    product_id: string;
+    quantity: number;
+    note?: string;
+    price: number;
+}
+
+export async function addToOrder(tableId: string, items: CartItem[]) {
     try {
         // 1. Check if active order exists
         let order = await getTableOrder(tableId);

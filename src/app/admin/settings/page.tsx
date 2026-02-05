@@ -1,22 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Bell, Shield, Palette, Database, Info, LogOut, Save, Moon, Sun, Upload } from 'lucide-react';
+import { Shield, Palette, Database, Info, LogOut, Moon, Sun } from 'lucide-react';
 import { getStoreSettings, updateStoreSettings } from './actions';
+
+// Accent Color Options (Apple Style)
+const accentColors = [
+    { value: '#007aff', name: 'Blue (Mặc định)' },
+    { value: '#34c759', name: 'Green' },
+    { value: '#ff9500', name: 'Orange' },
+    { value: '#ff3b30', name: 'Red' },
+    { value: '#af52de', name: 'Purple' },
+    { value: '#ff2d55', name: 'Pink' },
+];
 
 export default function SettingsPage() {
     const [theme, setTheme] = useState('light');
     const [isLoading, setIsLoading] = useState(false);
 
-    // Accent Color Options (Apple Style)
-    const accentColors = [
-        { value: '#007aff', name: 'Blue (Mặc định)' },
-        { value: '#34c759', name: 'Green' },
-        { value: '#ff9500', name: 'Orange' },
-        { value: '#ff3b30', name: 'Red' },
-        { value: '#af52de', name: 'Purple' },
-        { value: '#ff2d55', name: 'Pink' },
-    ];
     const [accentColor, setAccentColor] = useState('#007aff');
     const [accentColorName, setAccentColorName] = useState('Blue (Mặc định)');
 

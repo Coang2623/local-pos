@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, X, Coffee, MapPin, Wifi, Send, CheckCircle, ChevronLeft, Sun, Moon, ClipboardList, Clock, LayoutGrid, List, Trash2, Bell } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, X, Coffee, MapPin, Wifi, Send, CheckCircle, Sun, Moon, ClipboardList, Clock, LayoutGrid, List, Trash2, Bell } from 'lucide-react';
 import { createOrder, cancelOrderById, callStaff } from '../actions';
 import { supabase } from '@/lib/supabase';
 
@@ -25,12 +25,26 @@ interface CartItem {
     notes?: string;
 }
 
+interface Order {
+    id: string;
+    status: string;
+    total_amount: number;
+    created_at: string;
+    order_items: {
+        id: string;
+        quantity: number;
+        note?: string;
+        price_at_order: number;
+        products: { name: string };
+    }[];
+}
+
 interface Props {
     table: { id: string; name: string; areas: { name: string } };
     categories: Category[];
     products: Product[];
     storeInfo: { store_name: string; address?: string; wifi_pass?: string } | null;
-    initialOrders: any[];
+    initialOrders: Order[];
 }
 
 export default function CustomerMenu({ table, categories, products, storeInfo, initialOrders }: Props) {
@@ -39,10 +53,10 @@ export default function CustomerMenu({ table, categories, products, storeInfo, i
     const [cart, setCart] = useState<CartItem[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isOrdersOpen, setIsOrdersOpen] = useState(false);
-    const [orders, setOrders] = useState<any[]>(initialOrders);
+    const [orders, setOrders] = useState<Order[]>(initialOrders);
     const [isOrdering, setIsOrdering] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'individual' | 'grouped'>('individual');
     const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
     const [staffNote, setStaffNote] = useState('');
@@ -161,9 +175,7 @@ export default function CustomerMenu({ table, categories, products, storeInfo, i
         ));
     };
 
-    const removeFromCart = (productId: string) => {
-        setCart(prev => prev.filter(item => item.product.id !== productId));
-    };
+
 
     const totalAmount = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -204,7 +216,7 @@ export default function CustomerMenu({ table, categories, products, storeInfo, i
         } = {};
 
         orders.forEach(order => {
-            order.order_items?.forEach((item: any) => {
+            order.order_items?.forEach((item) => {
                 const name = item.products?.name || 'Sản phẩm';
                 const status = order.status; // Lấy trạng thái từ đơn hàng
 
@@ -1160,7 +1172,7 @@ export default function CustomerMenu({ table, categories, products, storeInfo, i
                                     </div>
                                 </div>
                             ) : (
-                                orders.map((order, idx) => (
+                                orders.map((order) => (
                                     <div key={order.id} className="sf-card" style={{
                                         marginBottom: '16px',
                                         padding: '16px',
@@ -1186,7 +1198,7 @@ export default function CustomerMenu({ table, categories, products, storeInfo, i
                                         </div>
                                         <div style={{ borderBottom: '1px dashed var(--separator)', margin: '8px 0' }} />
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            {order.order_items?.map((item: any, i: number) => (
+                                            {order.order_items?.map((item, i: number) => (
                                                 <div key={i} style={{ marginBottom: '8px' }}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
                                                         <span>{item.quantity}x {item.products?.name || 'Sản phẩm'}</span>

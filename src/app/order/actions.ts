@@ -17,7 +17,7 @@ export async function getTableInfo(tableId: string) {
 
         if (error) return null;
         return data;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -41,7 +41,7 @@ export async function getMenuForCustomer() {
             categories: categories || [],
             products: products || []
         };
-    } catch (e) {
+    } catch {
         return { categories: [], products: [] };
     }
 }
@@ -128,7 +128,7 @@ export async function getStoreInfo() {
             .limit(1)
             .single();
         return data;
-    } catch (e) {
+    } catch {
         return null;
     }
 }

@@ -115,7 +115,7 @@ export default function StaffCalls({ initialCalls }: { initialCalls: StaffCall[]
                             color: 'var(--label-primary)',
                             fontWeight: 500
                         }}>
-                            "{call.note}"
+                            &quot;{call.note}&quot;
                         </div>
 
                         <button
