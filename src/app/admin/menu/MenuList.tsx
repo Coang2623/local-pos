@@ -44,14 +44,38 @@ export default function MenuList({ initialCategories, initialProducts }: { initi
         return matchesCategory && matchesSearch;
     });
 
+    // Reset functions
+    const resetCategoryForm = () => {
+        setNewCatName('');
+    };
+
+    const resetProductForm = () => {
+        setNewProduct({
+            name: '',
+            price: 0,
+            base_cost: 0,
+            category_id: categories[0]?.id || '',
+            is_active: true
+        });
+    };
+
+    const closeCategoryModal = () => {
+        resetCategoryForm();
+        setIsCategoryModalOpen(false);
+    };
+
+    const closeProductModal = () => {
+        resetProductForm();
+        setIsProductModalOpen(false);
+    };
+
     const handleAddCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newCatName.trim()) return;
         try {
             const cat = await createCategory(newCatName);
             setCategories([...categories, cat]);
-            setNewCatName('');
-            setIsCategoryModalOpen(false);
+            closeCategoryModal();
         } catch (error) {
             alert('Lỗi: ' + (error as Error).message);
         }
@@ -64,8 +88,7 @@ export default function MenuList({ initialCategories, initialProducts }: { initi
             const prod = await createProduct(newProduct);
             // Refresh or add locally
             setProducts([...products, { ...prod, categories: { name: categories.find(c => c.id === prod.category_id)?.name || '' } }]);
-            setIsProductModalOpen(false);
-            setNewProduct({ ...newProduct, name: '', price: 0, base_cost: 0 });
+            closeProductModal();
         } catch (error) {
             alert('Lỗi: ' + (error as Error).message);
         }
@@ -203,7 +226,7 @@ export default function MenuList({ initialCategories, initialProducts }: { initi
                                 style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--separator)', backgroundColor: 'var(--bg-color)', color: 'var(--label-primary)', fontSize: '16px', marginBottom: '24px', outline: 'none' }}
                             />
                             <div style={{ display: 'flex', gap: '12px' }}>
-                                <button type="button" className="btn-apple secondary" style={{ flex: 1 }} onClick={() => setIsCategoryModalOpen(false)}>Hủy</button>
+                                <button type="button" className="btn-apple secondary" style={{ flex: 1 }} onClick={closeCategoryModal}>Hủy</button>
                                 <button type="submit" className="btn-apple primary" style={{ flex: 1 }}>Lưu</button>
                             </div>
                         </form>
@@ -258,7 +281,7 @@ export default function MenuList({ initialCategories, initialProducts }: { initi
                                 </select>
                             </div>
                             <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                                <button type="button" className="btn-apple secondary" style={{ flex: 1 }} onClick={() => setIsProductModalOpen(false)}>Hủy</button>
+                                <button type="button" className="btn-apple secondary" style={{ flex: 1 }} onClick={closeProductModal}>Hủy</button>
                                 <button type="submit" className="btn-apple primary" style={{ flex: 1 }}>Tạo món</button>
                             </div>
                         </form>

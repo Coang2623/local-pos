@@ -27,9 +27,20 @@ export async function getCategories() {
 }
 
 export async function createCategory(name: string) {
+    // Check for duplicate name (case-insensitive)
+    const { data: existing } = await supabase
+        .from('categories')
+        .select('id')
+        .ilike('name', name.trim())
+        .maybeSingle();
+
+    if (existing) {
+        throw new Error(`Danh mục "${name}" đã tồn tại.`);
+    }
+
     const { data, error } = await supabase
         .from('categories')
-        .insert([{ name }])
+        .insert([{ name: name.trim() }])
         .select();
 
     if (error) {
@@ -80,9 +91,20 @@ export async function createProduct(product: {
     image_url?: string;
     is_active: boolean;
 }) {
+    // Check for duplicate product name (case-insensitive)
+    const { data: existing } = await supabase
+        .from('products')
+        .select('id')
+        .ilike('name', product.name.trim())
+        .maybeSingle();
+
+    if (existing) {
+        throw new Error(`Sản phẩm "${product.name}" đã tồn tại.`);
+    }
+
     const { data, error } = await supabase
         .from('products')
-        .insert([product])
+        .insert([{ ...product, name: product.name.trim() }])
         .select();
 
     if (error) {

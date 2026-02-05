@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, Clock, CheckCircle2, XCircle, Coffee, Receipt, MapPin } from 'lucide-react';
 import { updateOrderStatus } from './actions';
+import { supabase } from '@/lib/supabase';
 
 interface Order {
     id: string;
@@ -17,6 +18,7 @@ interface Order {
         id: string;
         quantity: number;
         price_at_order: number;
+        note?: string;
         products: { name: string }
     }[];
 }
@@ -24,6 +26,62 @@ interface Order {
 export default function OrderList({ initialOrders }: { initialOrders: Order[] }) {
     const [orders, setOrders] = useState(initialOrders);
     const [statusFilter, setStatusFilter] = useState<string>('all');
+
+    useEffect(() => {
+        const channel = supabase
+            .channel('admin_orders_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'orders' },
+                async (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        // Fetch the full order
+                        const { data } = await supabase
+                            .from('orders')
+                            .select(`*, tables (name, areas (name)), order_items (*, products (name))`)
+                            .eq('id', payload.new.id)
+                            .single();
+
+                        if (data) {
+                            setOrders(prev => [data as any, ...prev]);
+                        }
+                    } else if (payload.eventType === 'UPDATE') {
+                        setOrders(prev => prev.map(o => o.id === payload.new.id ? { ...o, status: payload.new.status } : o));
+                    } else if (payload.eventType === 'DELETE') {
+                        setOrders(prev => prev.filter(o => o.id !== payload.old.id));
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'order_items' },
+                async (payload) => {
+                    // Update the specific order when items are added
+                    // This handles the race condition where order is created before items
+                    const { data } = await supabase
+                        .from('orders')
+                        .select(`*, tables (name, areas (name)), order_items (*, products (name))`)
+                        .eq('id', payload.new.order_id)
+                        .single();
+
+                    if (data) {
+                        setOrders(prev => {
+                            const exists = prev.find(o => o.id === data.id);
+                            if (exists) {
+                                return prev.map(o => o.id === data.id ? data as any : o);
+                            } else {
+                                return [data as any, ...prev];
+                            }
+                        });
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const filteredOrders = orders.filter(o => statusFilter === 'all' || o.status === statusFilter);
 
@@ -116,13 +174,20 @@ export default function OrderList({ initialOrders }: { initialOrders: Order[] })
 
                         <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
                             {order.order_items.map(item => (
-                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '14px' }}>
-                                    <span style={{ color: 'var(--label-primary)' }}>
-                                        <strong style={{ color: 'var(--system-blue)' }}>{item.quantity}x</strong> {item.products.name}
-                                    </span>
-                                    <span style={{ fontWeight: 500 }}>
-                                        {new Intl.NumberFormat('vi-VN').format(item.price_at_order * item.quantity)}
-                                    </span>
+                                <div key={item.id} style={{ marginBottom: '10px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                                        <span style={{ color: 'var(--label-primary)' }}>
+                                            <strong style={{ color: 'var(--system-blue)' }}>{item.quantity}x</strong> {item.products.name}
+                                        </span>
+                                        <span style={{ fontWeight: 500 }}>
+                                            {new Intl.NumberFormat('vi-VN').format(item.price_at_order * item.quantity)}
+                                        </span>
+                                    </div>
+                                    {item.note && (
+                                        <div style={{ fontSize: '12px', color: 'var(--system-orange)', marginTop: '2px', fontStyle: 'italic' }}>
+                                            Ghi chú: {item.note}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             <div style={{ height: '1px', backgroundColor: 'var(--separator)', margin: '12px 0' }} />
@@ -135,21 +200,21 @@ export default function OrderList({ initialOrders }: { initialOrders: Order[] })
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            {order.status === 'pending' \u0026\u0026 (
-                            <button onClick={() => handleUpdateStatus(order.id, 'preparing')} className="btn-apple primary" style={{ flex: 1, padding: '10px' }}>
-                                Xác nhận
-                            </button>
-                )}
-                            {order.status === 'preparing' \u0026\u0026 (
-                            <button onClick={() => handleUpdateStatus(order.id, 'served')} className="btn-apple primary" style={{ flex: 1, padding: '10px' }}>
-                                Xong món
-                            </button>
-                )}
-                            {['pending', 'preparing', 'served'].includes(order.status) \u0026\u0026 (
-                            <button onClick={() => handleUpdateStatus(order.id, 'cancelled')} className="btn-apple secondary" style={{ color: 'var(--system-red)', padding: '10px' }}>
-                                Hủy
-                            </button>
-                )}
+                            {order.status === 'pending' && (
+                                <button onClick={() => handleUpdateStatus(order.id, 'preparing')} className="btn-apple primary" style={{ flex: 1, padding: '10px' }}>
+                                    Xác nhận
+                                </button>
+                            )}
+                            {order.status === 'preparing' && (
+                                <button onClick={() => handleUpdateStatus(order.id, 'served')} className="btn-apple primary" style={{ flex: 1, padding: '10px' }}>
+                                    Xong món
+                                </button>
+                            )}
+                            {['pending', 'preparing', 'served'].includes(order.status) && (
+                                <button onClick={() => handleUpdateStatus(order.id, 'cancelled')} className="btn-apple secondary" style={{ color: 'var(--system-red)', padding: '10px' }}>
+                                    Hủy
+                                </button>
+                            )}
                         </div>
 
                         <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--label-tertiary)', fontSize: '12px' }}>
@@ -159,12 +224,12 @@ export default function OrderList({ initialOrders }: { initialOrders: Order[] })
                     </div>
                 ))}
 
-                {filteredOrders.length === 0 \u0026\u0026 (
-                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '100px 0', color: 'var(--label-tertiary)' }}>
-                    <Coffee size={64} style={{ marginBottom: '16px', opacity: 0.2 }} />
-                    <p>Không có hóa đơn nào trong danh sách này</p>
-                </div>
-        )}
+                {filteredOrders.length === 0 && (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '100px 0', color: 'var(--label-tertiary)' }}>
+                        <Coffee size={64} style={{ marginBottom: '16px', opacity: 0.2 }} />
+                        <p>Không có hóa đơn nào trong danh sách này</p>
+                    </div>
+                )}
             </div>
         </div>
     );

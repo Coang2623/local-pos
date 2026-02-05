@@ -44,3 +44,38 @@ export async function updateOrderStatus(id: string, status: string) {
 
     revalidatePath('/admin/orders');
 }
+
+export async function getStaffCalls() {
+    try {
+        const { data, error } = await supabase
+            .from('staff_calls')
+            .select(`
+                *,
+                tables (name, areas (name))
+            `)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    } catch (e) {
+        console.error('Error fetching staff calls:', e);
+        return [];
+    }
+}
+
+export async function updateStaffCallStatus(id: string, status: 'pending' | 'completed') {
+    try {
+        const { error } = await supabase
+            .from('staff_calls')
+            .update({ status })
+            .eq('id', id);
+
+        if (error) throw error;
+        revalidatePath('/admin/orders');
+        return { success: true };
+    } catch (e) {
+        console.error('Error updating staff call status:', e);
+        return { success: false };
+    }
+}

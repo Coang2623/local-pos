@@ -58,6 +58,15 @@ Tài liệu này mô tả cấu trúc các bảng trong cơ sở dữ liệu Pos
 | `note` | string | Ghi chú khách (ít đường, nhiều đá...) |
 | `price_at_order`| number | Giá lúc đặt (tránh thay đổi giá sau này) |
 
+### 1.7. `staff_calls` (Yêu cầu hỗ trợ)
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | uuid (PK) | Định danh yêu cầu |
+| `table_id` | uuid (FK) | Liên kết với `tables` |
+| `note` | string | Nội dung yêu cầu (Lấy khăn giấy, Thêm nước...) |
+| `status` | string | Trạng thái (`pending`, `completed`) |
+| `created_at` | timestamp | Thời gian yêu cầu |
+
 ---
 
 ## 2. Relationships (Quan hệ)
@@ -65,3 +74,4 @@ Tài liệu này mô tả cấu trúc các bảng trong cơ sở dữ liệu Pos
 - Một `category` có nhiều `products`.
 - Một `table` có thể có nhiều `orders` theo thời gian, nhưng tại một thời điểm chỉ có 1 `order` đang Active (`status != 'Paid'`).
 - Một `order` có nhiều `order_items`.
+- Một `table` có thể gửi nhiều `staff_calls`.

@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { Plus, QrCode, MapPin, Trash2, X } from 'lucide-react';
-import { createArea, deleteArea } from './actions';
+import { Plus, QrCode, MapPin, Trash2, X, Download, Loader2 } from 'lucide-react';
+import { createArea, deleteArea, getTables } from './actions';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface Area {
     id: string;
@@ -16,6 +19,68 @@ export default function AreaList({ initialAreas }: { initialAreas: Area[] }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newAreaName, setNewAreaName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [exportingAreaId, setExportingAreaId] = useState<string | null>(null);
+    const qrRef = useRef<SVGSVGElement>(null);
+    const [tempQRValue, setTempQRValue] = useState('');
+
+    const handleExportAllQR = async (areaId: string, areaName: string) => {
+        setExportingAreaId(areaId);
+        try {
+            const tables = await getTables(areaId);
+            if (!tables || tables.length === 0) {
+                alert('Khu vực này chưa có bàn nào.');
+                return;
+            }
+
+            const zip = new JSZip();
+            const folder = zip.folder(`QR_Codes_${areaName}`);
+
+            for (const table of tables) {
+                // Update temp QR and wait for render
+                setTempQRValue(`${window.location.origin}/order/${table.id}`);
+                await new Promise(r => setTimeout(r, 150)); // Wait for react to update hidden QR
+
+                const svg = qrRef.current;
+                if (!svg) continue;
+
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const svgBase64 = btoa(unescape(encodeURIComponent(svgData)));
+
+                // Create image and draw to canvas to get PNG
+                const pngBlob = await new Promise<Blob>((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width + 40;
+                        canvas.height = img.height + 80;
+                        const ctx = canvas.getContext('2d');
+                        if (ctx) {
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 20, 20);
+                            ctx.fillStyle = 'black';
+                            ctx.font = 'bold 20px Inter, sans-serif';
+                            ctx.textAlign = 'center';
+                            const displayName = `${table.name} - ${areaName}`;
+                            ctx.fillText(displayName, canvas.width / 2, canvas.height - 25);
+                        }
+                        canvas.toBlob((blob) => resolve(blob!), 'image/png');
+                    };
+                    img.src = 'data:image/svg+xml;base64,' + svgBase64;
+                });
+
+                folder?.file(`QR_Code_${table.name}.png`, pngBlob);
+            }
+
+            const content = await zip.generateAsync({ type: 'blob' });
+            saveAs(content, `QR_Codes_${areaName}.zip`);
+        } catch (error) {
+            console.error(error);
+            alert('Lỗi khi xuất QR: ' + (error as Error).message);
+        } finally {
+            setExportingAreaId(null);
+        }
+    };
 
     const handleAddArea = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -93,9 +158,18 @@ export default function AreaList({ initialAreas }: { initialAreas: Area[] }) {
                             <Link href={`/admin/areas/${area.id}`} className="btn-apple secondary" style={{ flex: 1 }}>
                                 Chi tiết bàn
                             </Link>
-                            <button className="btn-apple secondary" style={{ flex: 1 }}>
-                                <QrCode size={18} />
-                                Xuất QR
+                            <button
+                                className="btn-apple secondary"
+                                style={{ flex: 1, position: 'relative' }}
+                                onClick={() => handleExportAllQR(area.id, area.name)}
+                                disabled={exportingAreaId === area.id}
+                            >
+                                {exportingAreaId === area.id ? (
+                                    <Loader2 size={18} className="animate-spin" />
+                                ) : (
+                                    <QrCode size={18} />
+                                )}
+                                {exportingAreaId === area.id ? 'Đang xuất...' : 'Xuất QR'}
                             </button>
                         </div>
                     </div>
@@ -193,6 +267,16 @@ export default function AreaList({ initialAreas }: { initialAreas: Area[] }) {
                     </div>
                 </div>
             )}
+
+            {/* Hidden QR for Exporting */}
+            <div style={{ position: 'absolute', left: '-9999px', top: '0' }}>
+                <QRCodeSVG
+                    ref={qrRef}
+                    value={tempQRValue}
+                    size={200}
+                    level="H"
+                />
+            </div>
 
         </div>
     );

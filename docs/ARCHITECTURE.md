@@ -33,4 +33,5 @@ Hệ thống được xây dựng theo mô hình **Client-Server-Realtime**:
 2. **Khách đặt món** -> `insert` vào bảng `orders` và `order_items` trong Supabase.
 3. **Realtime Event** -> Màn hình quầy nhận được thông báo món mới.
 4. **Auto Print** -> Server gọi API in phiếu chế biến gửi đến máy in bếp.
-5. **Thanh toán** -> Nhân viên cập nhật trạng thái `is_paid = true` -> giải phóng bàn về `is_available = true`.
+5. **Gọi nhân viên** -> Khách gửi yêu cầu -> Admin nhận thông báo Real-time -> Nhân viên xử lý và bấm "Đã xử lý".
+6. **Thanh toán** -> Nhân viên cập nhật trạng thái `is_paid = true` -> giải phóng bàn về `is_available = true`.
